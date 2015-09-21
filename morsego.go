@@ -10,6 +10,7 @@ import (
 
 func main() {
 
+  inputFile := flag.String("input", "", "input file to read from")
   outputFile := flag.String("output", "", "output file to write to")
 
   flag.Parse()
@@ -19,8 +20,32 @@ func main() {
 
     morseFromArray(flag.Args(), writer)
 
-  } else { // TODO: Input from file
+  } else { // Input from file
+
+    reader := openInputFile(*inputFile)
+
+    morseFromFile(reader, writer)
+
   }
+
+}
+
+func openInputFile(filename string) io.Reader {
+
+  var reader io.Reader
+
+  if filename == "" {
+    reader = os.Stdin
+  } else {
+    var err error
+    reader, err = os.Open(filename)
+
+    if err != nil {
+      panic(err)
+    }
+  }
+
+  return reader
 
 }
 
@@ -40,6 +65,29 @@ func openOutputFile(filename string) io.Writer {
   }
 
   return writer
+}
+
+func morseFromFile(reader io.Reader, writer io.Writer) {
+
+  buf := make([]byte, 1024)
+  n, _ := reader.Read(buf)
+
+  for n > 0 {
+
+    for i := 0; i < n; i++ {
+      morseChar := morse(rune(buf[i]))
+      fmt.Fprintf(writer, "%s", morseChar)
+
+      if morseChar != "" {
+        fmt.Fprintf(writer, " ")
+      }
+
+    }
+
+    n, _ = reader.Read(buf)
+
+  }
+
 }
 
 func morseFromArray(texts []string, writer io.Writer) {
